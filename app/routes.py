@@ -1,15 +1,17 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from app import db
+from app import db, cache
 from app.models import User, Task
 
 bp = Blueprint('main', __name__)
 
 @bp.route('/')
+@cache.cached(timeout=300)
 def index():
     return render_template('index.html')
 
 @bp.route('/health')
+@cache.cached(timeout=60)
 def health():
     """Health check endpoint for monitoring"""
     return jsonify({"status": "healthy", "service": "task-manager"}), 200
