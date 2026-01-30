@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Monitoring Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { font-size: 1.75rem; margin-bottom: 2rem; color: #f8fafc; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .card-title { font-size: 0.875rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-healthy { background: #065f46; color: #6ee7b7; }
+        .status-down { background: #7f1d1d; color: #fca5a5; }
+        .status-checking { background: #1e40af; color: #93c5fd; }
+        .metric-value { font-size: 2rem; font-weight: 700; color: #f8fafc; }
+        .metric-label { font-size: 0.875rem; color: #64748b; margin-top: 0.25rem; }
+        .link-list { list-style: none; }
+        .link-list li { margin-bottom: 0.75rem; }
+        .link-list a {
+            color: #60a5fa;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .link-list a:hover { color: #93c5fd; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #334155;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #94a3b8; }
+        .info-value { color: #f8fafc; font-family: monospace; }
+        .refresh-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .refresh-btn:hover { background: #2563eb; }
+        .last-updated { color: #64748b; font-size: 0.75rem; margin-top: 1.5rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Manager SaaS - Monitoring</h1>
+
+        <div class="grid">
+            <!-- Health Status -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Application Health</span>
+                    <span id="health-badge" class="status-badge status-checking">Checking...</span>
+                </div>
+                <div class="metric-value" id="health-status">--</div>
+                <div class="metric-label">Service Status</div>
+                <button class="refresh-btn" onclick="checkHealth()" style="margin-top: 1rem;">Refresh</button>
+            </div>
+
+            <!-- Response Time -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Response Time</span>
+                </div>
+                <div class="metric-value" id="response-time">--</div>
+                <div class="metric-label">Last health check (ms)</div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Quick Links</span>
+                </div>
+                <ul class="link-list">
+                    <li><a href="http://51.20.16.125" target="_blank">→ Live Application</a></li>
+                    <li><a href="http://51.20.16.125/health" target="_blank">→ Health Endpoint</a></li>
+                    <li><a href="https://stats.uptimerobot.com/h1VfZaMJ10" target="_blank">→ UptimeRobot Status</a></li>
+                    <li><a href="https://github.com/ronit111/task-manager-saas/actions" target="_blank">→ CI/CD Pipelines</a></li>
+                    <li><a href="https://github.com/ronit111/task-manager-saas" target="_blank">→ GitHub Repo</a></li>
+                </ul>
+            </div>
+
+            <!-- Server Info -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Server Info</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">IP Address</span>
+                    <span class="info-value">51.20.16.125</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Region</span>
+                    <span class="info-value">eu-north-1</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Instance</span>
+                    <span class="info-value">t2.micro</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Port</span>
+                    <span class="info-value">80 (nginx) → 5001</span>
+                </div>
+            </div>
+
+            <!-- Architecture -->
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">Architecture</span>
+                </div>
+                <pre style="color: #94a3b8; font-size: 0.8rem; line-height: 1.6; overflow-x: auto;">
+┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────────────┐
+│   Client    │────▶│   Nginx     │────▶│         Docker Container            │
+│  (Browser)  │     │  (Port 80)  │     │  ┌─────────────────────────────┐   │
+└─────────────┘     └─────────────┘     │  │  Flask App (Port 5000)      │   │
+                                        │  │  ├── Routes + Caching       │   │
+┌─────────────┐                         │  │  ├── SQLite Database        │   │
+│  GitHub     │──CI/CD──▶ deploy.sh ───▶│  │  └── Logging                │   │
+│  Actions    │                         │  └─────────────────────────────┘   │
+└─────────────┘                         └─────────────────────────────────────┘
+                </pre>
+            </div>
+        </div>
+
+        <div class="last-updated">Last updated: <span id="last-update">--</span></div>
+    </div>
+
+    <script>
+        async function checkHealth() {
+            const badge = document.getElementById('health-badge');
+            const status = document.getElementById('health-status');
+            const responseTime = document.getElementById('response-time');
+            const lastUpdate = document.getElementById('last-update');
+
+            badge.textContent = 'Checking...';
+            badge.className = 'status-badge status-checking';
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch('http://51.20.16.125/health', {
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                const endTime = performance.now();
+                const data = await response.json();
+
+                if (data.status === 'healthy') {
+                    badge.textContent = 'Healthy';
+                    badge.className = 'status-badge status-healthy';
+                    status.textContent = 'Operational';
+                } else {
+                    badge.textContent = 'Degraded';
+                    badge.className = 'status-badge status-down';
+                    status.textContent = 'Issues Detected';
+                }
+
+                responseTime.textContent = Math.round(endTime - startTime);
+            } catch (error) {
+                badge.textContent = 'Down';
+                badge.className = 'status-badge status-down';
+                status.textContent = 'Unreachable';
+                responseTime.textContent = '--';
+            }
+
+            lastUpdate.textContent = new Date().toLocaleString();
+        }
+
+        // Check on load
+        checkHealth();
+
+        // Auto-refresh every 30 seconds
+        setInterval(checkHealth, 30000);
+    </script>
+</body>
+</html>
